@@ -17,11 +17,9 @@ name = "latinga"
 required-features = ["cli"]
 
 [dependencies]
-# regex = "1.11"
 regex = { version = "1.11", default-features = false, features = ["std", "perf", "unicode-perl", "unicode-case"] }
 anyhow = "1.0"
 aho-corasick = "1.1"
-# serde = { version = "1.0", features = ["derive"] }
 serde = { version = "1.0", default-features = false, features = ["derive", "alloc"] }
 memmap2 = "0.9"
 
@@ -41,7 +39,6 @@ cli = ["clap", "glob", "tempfile", "rayon"]
 # --- Dev Dependencies (Platform Gated) ---
 
 # 1. Native-only dev-dependencies (CLI tests & Benchmarks)
-# These are IGNORED when compiling for WASM, fixing the Rayon error.
 [target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies]
 criterion = "0.5"  # Moved here!
 assert_cmd = "2.0"
@@ -53,15 +50,21 @@ glob = "0.3"
 [target.'cfg(target_arch = "wasm32")'.dev-dependencies]
 wasm-bindgen-test = "0.3.56"
 
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = false
+
 [[bench]]
 name = "benchmark"
 harness = false
 
-[profile.release]
-# opt-level = 3
-# lto = "fat"
-# codegen-units = 1
-# panic = "abort"
-# strip = true
-# debug = false
+[profile.dev]
+opt-level = 0
 debug = true
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+panic = "abort"
+strip = true
+debug = false
