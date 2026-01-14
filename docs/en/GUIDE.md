@@ -39,7 +39,7 @@ Wrap any text in these markers to prevent conversion:
 - Input: `Cyrillic {]Ер[} stays Cyrillic.`
 - Output: `Cyrillic Ер stays Cyrillic.`
 
-### C. Regex Shielding (-n, --qalqon)
+### C. Regex Shielding (-q, --qalqon)
 
 Define custom patterns to protect specific text segments:
 ```
@@ -58,12 +58,12 @@ $ latinga input.txt -m "октябрь=>oktabr;сентябрь=>sentabr"
 $ latinga input.txt -m rules.txt
 ```
 
-## 5. Validation Mode (-s, --sinab-kor)
+## 5. Validation Mode
 
 Use Latinga as a linter to find errors in Latin text (e.g., finding sh where ş is expected in Kelgusi mode):
 
 ```
-$ latinga -s input.txt
+$ latinga -t input.txt
 ```
 
 If errors are found, it outputs the line/column and exits with status 1, making it ideal for CI/CD pipelines.

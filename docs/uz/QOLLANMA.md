@@ -42,12 +42,12 @@ Agar matnning biror qismi mutloq oʻzgarmasligini xohlasangiz:
 - Kiritma: Ер ва {]Ер[}.
 - Chiqarma: Yer va Ер.
 
-### C. Qolipli Qalqon (-n, --qalqon)
+### C. Qolipli Qalqon (-q, --qalqon)
 
 Murakkab qoliplarni oʻzgarishdan qalqonlash ya'ni oʻzgarmasdan qolishini ta'minlash uchun ishlatiladi:
 
 ```
-$ latinga matn.txt -n "\*\*Ruscha:\*\* ([^\n]+)"
+$ latinga matn.txt -q "\*\*Ruscha:\*\* ([^\n]+)"
 ```
 
 ## 4. Maxsus Almashtirish (-m, --almashtir)
@@ -66,7 +66,7 @@ $ latinga matn.txt -m almashtiruvlar.txt
 
 Matndagi tutuq belgisi (joriy tartibda) va eskirgan harf mavjudligini tekshiradi (kelgusi tartibda).
 ```
-$ latinga -s matn.txt
+$ latinga -t matn.txt
 ```
 
 Agar xato topilsa, dastur xato satri va ustunini koʻrsatadi hamda xato holati boʻlgan `exit status 1` bilan tugaydi.
