@@ -44,7 +44,7 @@ jobs:
 
   # =========================================================
   # JOB 2: BUILD BINARIES
-  # Fixes: Unique filenames & Musl for Linux
+  # Fixes: Explicit file renaming (mv) to prevent Overwrite
   # =========================================================
   build_binaries:
     name: Build Binary (${{ matrix.os }})
@@ -71,7 +71,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Install Musl tools (Required for static Linux binary)
       - name: Install musl tools
         if: matrix.target == 'x86_64-unknown-linux-musl'
         run: |
@@ -89,21 +88,24 @@ jobs:
       - name: Build Binary
         run: cargo build --release --features cli --target ${{ matrix.target }}
 
-      # Upload to Release Page (Renaming happens here)
+      - name: Rename Binary
+        shell: bash
+        run: |
+          cd target/${{ matrix.target }}/release
+          mv ${{ matrix.artifact_name }} ${{ matrix.asset_name }}
+
       - name: Upload Release Asset
         if: github.event_name == 'release'
         uses: softprops/action-gh-release@v1
         with:
-          files: target/${{ matrix.target }}/release/${{ matrix.artifact_name }}
-          name: ${{ matrix.asset_name }} # This applies the unique name
-
-      # Upload Artifacts for Manual Run
+          files: target/${{ matrix.target }}/release/${{ matrix.asset_name }}
+      
       - name: Upload Artifact (Manual)
         if: github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.asset_name }}
-          path: target/${{ matrix.target }}/release/${{ matrix.artifact_name }}
+          path: target/${{ matrix.target }}/release/${{ matrix.asset_name }}
 
   # =========================================================
   # JOB 3: WASM BUILD & WEB DEPLOY
