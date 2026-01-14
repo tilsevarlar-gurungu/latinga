@@ -1,8 +1,5 @@
 name: Release & Deploy
 
-# Triggers:
-# 1. CI: Push to main or PRs (Runs tests only)
-# 2. CD: Manual trigger or a Published Release (Runs tests -> Builds Binaries -> Deploys Web)
 on:
   push:
     branches: [ "main" ]
@@ -12,7 +9,6 @@ on:
   release:
     types: [published]
 
-# Permissions required for OIDC (Crates.io) and GitHub Pages deployment
 permissions:
   contents: write
   pages: write
@@ -20,8 +16,7 @@ permissions:
 
 jobs:
   # =========================================================
-  # JOB 1: TEST (The Gatekeeper)
-  # must pass before any release artifacts are built
+  # JOB 1: TEST
   # =========================================================
   test:
     name: Test (Native & WASM)
@@ -29,32 +24,27 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Install Rust (Stable)
       - name: Install Rust Toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: stable
           targets: wasm32-unknown-unknown
 
-      # Install Just
       - name: Install Just
         uses: extractions/setup-just@v2
 
-      # Install wasm-pack
       - name: Install wasm-pack
         run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
 
-      # Run Native Tests
       - name: Run Native Tests
         run: just test-native
 
-      # Run WASM Tests (Headless Chrome is standard on ubuntu-latest)
       - name: Run WASM Tests
         run: just test-wasm
 
   # =========================================================
   # JOB 2: BUILD BINARIES
-  # Runs only on Release or Manual Trigger, and only if tests pass
+  # Fixes: Unique filenames & Musl for Linux
   # =========================================================
   build_binaries:
     name: Build Binary (${{ matrix.os }})
@@ -66,20 +56,27 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            target: x86_64-unknown-linux-gnu
+            target: x86_64-unknown-linux-musl
             artifact_name: latinga
-            asset_name: latinga-linux-x86_64
+            asset_name: latinga-linux-amd64
           - os: windows-latest
             target: x86_64-pc-windows-msvc
             artifact_name: latinga.exe
-            asset_name: latinga-windows-x86_64.exe
+            asset_name: latinga-windows-amd64.exe
           - os: macos-latest
             target: x86_64-apple-darwin
             artifact_name: latinga
-            asset_name: latinga-macos-x86_64
+            asset_name: latinga-macos-amd64
 
     steps:
       - uses: actions/checkout@v4
+
+      # Install Musl tools (Required for static Linux binary)
+      - name: Install musl tools
+        if: matrix.target == 'x86_64-unknown-linux-musl'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y musl-tools
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -89,22 +86,18 @@ jobs:
       - name: Install Just
         uses: extractions/setup-just@v2
 
-      # Build the binary using your Justfile command
-      # We override the cargo build command inside just to ensure the target is correct if needed,
-      # but standard 'cargo build --release' usually auto-detects host.
-      # For cross-platform safety, we explicitly add the target flag.
       - name: Build Binary
         run: cargo build --release --features cli --target ${{ matrix.target }}
 
-      # Upload the binary to the Release Page
+      # Upload to Release Page (Renaming happens here)
       - name: Upload Release Asset
         if: github.event_name == 'release'
         uses: softprops/action-gh-release@v1
         with:
           files: target/${{ matrix.target }}/release/${{ matrix.artifact_name }}
-          name: ${{ matrix.asset_name }} # Rename file on upload for clarity
+          name: ${{ matrix.asset_name }} # This applies the unique name
 
-      # Upload Artifacts for Manual Triggers (so you can download them from Actions tab)
+      # Upload Artifacts for Manual Run
       - name: Upload Artifact (Manual)
         if: github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@v4
@@ -114,7 +107,6 @@ jobs:
 
   # =========================================================
   # JOB 3: WASM BUILD & WEB DEPLOY
-  # Runs only on Release or Manual Trigger
   # =========================================================
   deploy_web:
     name: Build WASM & Deploy Web
@@ -135,19 +127,15 @@ jobs:
       - name: Install wasm-pack
         run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
 
-      # Build WASM using your Justfile
-      # Output goes to: web/pkg/
       - name: Build WASM
         run: just build-wasm
 
-      # 1. Remove the .gitignore that wasm-pack generates so files aren't hidden
-      # 2. Create .nojekyll to ensure GitHub Pages serves files starting with "_"
+      # Fix for GitHub Pages (MIME types & Hidden files)
       - name: Prepare for Deployment
         run: |
           rm web/pkg/.gitignore
           touch web/.nojekyll
 
-      # Create a ZIP of the pkg folder for developers to download
       - name: Zip WASM Package
         if: github.event_name == 'release'
         run: |
@@ -160,28 +148,9 @@ jobs:
         with:
           files: latinga-wasm-pkg.zip
 
-      # Deploy the 'web' folder to GitHub Pages
-      # This deploys 'web/index.html' and 'web/pkg' to the root of the gh-pages branch.
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./web
-          force_orphan: true 
-
-  # =========================================================
-  # JOB 4: PUBLISH TO CRATES.IO (FUTURE PROOFING)
-  # Currently commented out. Enable when ready.
-  # =========================================================
-  # publish_crate:
-  #   name: Publish to Crates.io
-  #   needs: test
-  #   if: github.event_name == 'release'
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: dtolnay/rust-toolchain@stable
-  #     
-  #     # This relies on "Trusted Publishing" (OIDC) setup in Crates.io settings
-  #     - name: Cargo Publish
-  #       run: cargo publish
+          force_orphan: true
