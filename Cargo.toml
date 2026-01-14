@@ -1,13 +1,13 @@
 [package]
 name = "latinga"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
-authors = ["Your Name <email@example.com>"]
 description = "High-performance, Zero-Copy Uzbek Cyrillic-Latin transliterator."
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/yourusername/latinga"
-keywords = ["uzbek", "transliteration", "cyrillic", "latin", "zero-copy"]
+repository = "https://github.com/tilsevarlar-gurungu/latinga"
+keywords = ["uzbek", "transliteration", "cyrillic", "latin", "uzbekistan"]
 categories = ["text-processing"]
+readme = "README.md"
 
 [lib]
 crate-type = ["cdylib", "rlib"]

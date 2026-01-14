@@ -16,8 +16,9 @@ Latinga — /loˈtiŋɡa/ yani "lotinga" deb oʻqiladi. Chunki umid shulki kelaj
 
 ## 🚀 Foydali Bogʻlamalar
 
-* **Oʻrnatuv:** [Oʻzbekcha oʻrnatuv qoʻllanmasi](docs/uz/OERNATUV.md).
-* **Koʻrgazma:** Ilovani [chapani.github.io/latinga/](https://chapani.github.io/latinga/) jonli veb sahifasida sinab koʻring.
+* **Oʻrnatuv:** [Oʻzbekcha oʻrnatuv qoʻllanmasi](https://github.com/tilsevarlar-gurungu/latinga/blob/main/docs/uz/OERNATUV.md).
+* **Koʻrgazma:** Ilovani [tilsevarlar-gurungu.github.io/latinga/](https://tilsevarlar-gurungu.github.io/latinga/) jonli veb sahifasida sinab koʻring.
+* [English version of README](https://github.com/tilsevarlar-gurungu/latinga/blob/main/README_EN.md)
 
 ## Tezkor Foydalanish
 
