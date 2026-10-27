@@ -234,3 +234,43 @@ fn test_joriy_validation_boundary_regression_cases() {
     let input_nl = "o'rdak\n";
     assert_eq!(tr.tekshir(input_nl, 3).hatolar.len(), 1);
 }
+
+#[test]
+fn test_validation_legacy_alphabet_detection() {
+    let tr = common::setup_translator(Tartib::Joriy, None);
+
+    // Digraphs
+    let res_sh = tr.tekshir("shahar", 3);
+    assert!(res_sh.hatolar[0].habar.contains("'ş'"));
+
+    let res_ch = tr.tekshir("olcha", 3);
+    assert_eq!(res_ch.hatolar[0].ustun, 3);
+
+    // Okinas
+    let res_o = tr.tekshir("o'rdak", 3);
+    assert!(res_o.hatolar[0].habar.contains("'ö'"));
+
+    let res_g = tr.tekshir("g'isht", 3);
+    assert!(res_g.hatolar[0].habar.contains("'ğ'"));
+}
+
+#[test]
+fn test_validation_casing_and_multi_error_handling() {
+    let tr = common::setup_translator(Tartib::Joriy, None);
+
+    // Full uppercase
+    let res_upper = tr.tekshir("SHAXS", 3);
+    assert!(res_upper.hatolar[0].habar.contains("'Ş'"));
+
+    // Sentence case
+    let res_sentence = tr.tekshir("Shaxs", 3);
+    assert!(res_sentence.hatolar[0].habar.contains("'Ş'"));
+
+    // Multiple errors
+    let res_multi = tr.tekshir("balki u\nmashhur va olchoq", 1);
+    assert_eq!(res_multi.jami, 2);
+    assert_eq!(res_multi.hatolar.len(), 1);
+    assert_eq!(res_multi.hatolar[0].soez, "mashhur");
+    assert_eq!(res_multi.hatolar[0].qator, 2);
+    assert_eq!(res_multi.hatolar[0].ustun, 3);
+}

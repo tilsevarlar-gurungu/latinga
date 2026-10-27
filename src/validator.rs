@@ -70,6 +70,7 @@ impl<'a> Validator<'a> {
         limit: usize,
     ) {
         let mut word_start: Option<(usize, usize)> = None;
+        let mut prev_char: Option<char> = None;
 
         for (byte_idx, c) in text.char_indices() {
             // 1. Handle Newlines
@@ -81,6 +82,7 @@ impl<'a> Validator<'a> {
                 }
                 *line += 1;
                 *col = 1;
+                prev_char = Some(c);
                 continue;
             }
 
@@ -92,22 +94,24 @@ impl<'a> Validator<'a> {
                     word_start = Some((byte_idx, *col));
                 }
 
-                if self.config.tartib == Tartib::Joriy && BARCHA_TUTUQ_TURLARI.contains(&c)
-                    && let Some(msg) = self.check_apostrophe_inline(c) {
-                        *total_count += 1;
-                        if errors.len() < limit {
-                            let start_idx = word_start.unwrap().0;
-                            let end_idx = self.find_word_end(text, byte_idx);
-                            let full_word = &text[start_idx..end_idx];
+                if self.config.tartib == Tartib::Joriy
+                    && BARCHA_TUTUQ_TURLARI.contains(&c)
+                    && let Some(msg) = self.check_apostrophe_inline(c, prev_char)
+                {
+                    *total_count += 1;
+                    if errors.len() < limit {
+                        let start_idx = word_start.unwrap().0;
+                        let end_idx = self.find_word_end(text, byte_idx);
+                        let full_word = &text[start_idx..end_idx];
 
-                            errors.push(TekshiruvHatosi {
-                                qator: *line,
-                                ustun: *col,
-                                soez: Cow::Borrowed(full_word),
-                                habar: msg,
-                            });
-                        }
+                        errors.push(TekshiruvHatosi {
+                            qator: *line,
+                            ustun: *col,
+                            soez: Cow::Borrowed(full_word),
+                            habar: msg,
+                        });
                     }
+                }
             } else {
                 if let Some((start_idx, start_col)) = word_start {
                     let word = &text[start_idx..byte_idx];
@@ -117,6 +121,7 @@ impl<'a> Validator<'a> {
             }
 
             *col += 1;
+            prev_char = Some(c);
         }
 
         if let Some((start_idx, start_col)) = word_start {
@@ -133,8 +138,12 @@ impl<'a> Validator<'a> {
     }
 
     #[inline(always)]
-    fn check_apostrophe_inline(&self, c: char) -> Option<Cow<'static, str>> {
-        if c == TUTUQ {
+    fn check_apostrophe_inline(&self, c: char, prev: Option<char>) -> Option<Cow<'static, str>> {
+        if let Some(prev_char) = prev
+            && (prev_char.eq_ignore_ascii_case(&'o') || prev_char.eq_ignore_ascii_case(&'g'))
+        {
+            None
+        } else if c == TUTUQ {
             None
         } else {
             Some(crate::HabarKaliti::TutuqmasAniqlandi.koersat(&self.config.tartib))
@@ -156,53 +165,49 @@ impl<'a> Validator<'a> {
 
         let is_counting_only = errors.len() >= limit;
 
-        match self.config.tartib {
-            Tartib::Joriy => {
-                let has_s = word.contains(['s', 'S']);
-                let has_h = word.contains(['h', 'H']);
+        if self.config.tartib == Tartib::Joriy {
+            let has_s = word.contains(['s', 'S']);
+            let has_h = word.contains(['h', 'H']);
 
-                if has_s && has_h {
-                    let wl = word.to_lowercase();
-                    if let Some(mat) = crate::engine::RE_SH.find(&wl)
-                        && !word.chars().any(|c| BARCHA_TUTUQ_TURLARI.contains(&c)) {
-                            *total_count += 1;
-                            if !is_counting_only {
-                                let char_offset = word[..mat.start()].chars().count();
-                                errors.push(TekshiruvHatosi {
-                                    qator: line,
-                                    ustun: col + char_offset,
-                                    soez: Cow::Borrowed(word),
-                                    habar: crate::HabarKaliti::EskiAjratuvchiTutuqAniqlandi
-                                        .koersat(&self.config.tartib),
-                                });
-                            }
-                        }
-                }
-            }
-            Tartib::Kelgusi => {
-                for (trigger, replacement) in KELGUSI_MAP {
-                    if let Some(byte_pos) = self.find_case_insensitive(word, trigger) {
-                        *total_count += 1;
-                        if !is_counting_only {
-                            let is_upper = word.chars().next().is_some_and(|c| c.is_uppercase());
-                            let char_offset = word[..byte_pos].chars().count();
-                            let s = if is_upper {
-                                replacement.to_uppercase()
-                            } else {
-                                replacement.to_lowercase()
-                            };
-
-                            errors.push(TekshiruvHatosi {
-                                qator: line,
-                                ustun: col + char_offset,
-                                soez: Cow::Borrowed(word),
-                                habar: crate::HabarKaliti::EskiQoeshHarf(s)
-                                    .koersat(&self.config.tartib),
-                            });
-                        }
-                        return;
+            if has_s && has_h {
+                let wl = word.to_lowercase();
+                if let Some(mat) = crate::engine::RE_SH.find(&wl)
+                    && !word.chars().any(|c| BARCHA_TUTUQ_TURLARI.contains(&c))
+                {
+                    *total_count += 1;
+                    if !is_counting_only {
+                        let char_offset = word[..mat.start()].chars().count();
+                        errors.push(TekshiruvHatosi {
+                            qator: line,
+                            ustun: col + char_offset,
+                            soez: Cow::Borrowed(word),
+                            habar: crate::HabarKaliti::EskiAjratuvchiTutuqAniqlandi
+                                .koersat(&self.config.tartib),
+                        });
                     }
                 }
+            }
+        }
+        for (trigger, replacement) in KELGUSI_MAP {
+            if let Some(byte_pos) = self.find_case_insensitive(word, trigger) {
+                *total_count += 1;
+                if !is_counting_only {
+                    let is_upper = word.chars().next().is_some_and(|c| c.is_uppercase());
+                    let char_offset = word[..byte_pos].chars().count();
+                    let s = if is_upper {
+                        replacement.to_uppercase()
+                    } else {
+                        replacement.to_lowercase()
+                    };
+
+                    errors.push(TekshiruvHatosi {
+                        qator: line,
+                        ustun: col + char_offset,
+                        soez: Cow::Borrowed(word),
+                        habar: crate::HabarKaliti::EskiQoeshHarf(s).koersat(&self.config.tartib),
+                    });
+                }
+                return;
             }
         }
     }

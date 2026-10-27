@@ -99,7 +99,7 @@ fn test_joriy_validation_structure() {
     let err = &summary.hatolar[0];
     assert_eq!(err.soez, "o'rdak");
     assert_eq!(err.qator, 1);
-    assert_eq!(err.ustun, 2);
+    assert_eq!(err.ustun, 1);
     assert!(!err.habar.is_empty())
 }
 
