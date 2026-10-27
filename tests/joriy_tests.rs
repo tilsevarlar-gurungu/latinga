@@ -11,15 +11,15 @@ fn test_joriy_alphabet_mappings_and_casing() {
     let tr = common::setup_translator(Tartib::Joriy, None);
 
     // Standard Alphabet Mappings
-    assert_eq!(tr.oegir("ЯХШИ"), "YAXSHI");
-    assert_eq!(tr.oegir("Ёш"), "Yosh");
-    assert_eq!(tr.oegir("АҚШ"), "AQSH");
-    assert_eq!(tr.oegir("ЧАТ"), "CHAT");
-    assert_eq!(tr.oegir("Шарқ"), "Sharq");
+    assert_eq!(tr.oegir("ЯХШИ"), "YAXŞI");
+    assert_eq!(tr.oegir("Ёш"), "Yoş");
+    assert_eq!(tr.oegir("АҚШ"), "AQŞ");
+    assert_eq!(tr.oegir("ЧАТ"), "ÇAT");
+    assert_eq!(tr.oegir("Шарқ"), "Şarq");
 
     // Standardizing input apostrophes for O' and G'
     let input = format!("o{ODATIY_TIRNOQ}rdak g{TESKARI_TIRNOQ}oz");
-    let expected = format!("o{OKINA}rdak g{OKINA}oz");
+    let expected = "ördak ğoz";
     assert_eq!(tr.oegir(&input), expected);
 }
 
@@ -52,27 +52,39 @@ fn test_joriy_glottal_stops_and_phonetic_syllable_separation() {
     // Ayirish Belgisi (ъ) -> TUTUQ/O_OKINA
     assert_eq!(tr.oegir("Маъно"), format!("Ma{TUTUQ}no"));
     assert_eq!(tr.oegir("Раъно"), format!("Ra{TUTUQ}no"));
-    assert_eq!(tr.oegir("Шеър"), format!("She{TUTUQ}r"));
-    assert_eq!(tr.oegir("Мўъжиза"), format!("Mo{OKINA}jiza"));
+    assert_eq!(tr.oegir("Шеър"), format!("Şe{TUTUQ}r"));
+    assert_eq!(tr.oegir("Мўъжиза"), format!("Mö{TUTUQ}jiza"));
     assert_eq!(tr.oegir("қитъа"), format!("qit{TUTUQ}a"));
     assert_eq!(tr.oegir("съезд"), "syezd");
     assert_eq!(tr.oegir("Объект"), "Obyekt");
     assert_eq!(tr.oegir("манъг"), format!("man{TUTUQ}g"));
+    assert_eq!(tr.oegir("қашшоқ"), "qaşşoq"); // Negative check (digraph)
+}
+
+#[test]
+fn test_joriy_sh_special_case() {
+    let tr = common::setup_translator(Tartib::Joriy, None);
 
     // Syllable Separation for S+H
-    assert_eq!(tr.oegir("Ishoq"), format!("Is{TUTUQ}hoq"));
-    assert_eq!(tr.oegir("ishoq"), format!("is{TUTUQ}hoq"));
-    assert_eq!(tr.oegir("ISHOQ"), format!("IS{TUTUQ}HOQ"));
-    assert_eq!(tr.oegir("Mushaf"), format!("Mus{TUTUQ}haf"));
-    assert_eq!(tr.oegir("mushaf"), format!("mus{TUTUQ}haf"));
-    assert_eq!(tr.oegir("MUSHAF"), format!("MUS{TUTUQ}HAF"));
+    assert_eq!(tr.oegir(&format!("Is{}hoq", TUTUQ)), "Ishoq");
+    assert_eq!(tr.oegir(&format!("is{}hoq", TUTUQ)), "ishoq");
+    assert_eq!(tr.oegir(&format!("IS{}HOQ", TUTUQ)), "ISHOQ");
+    assert_eq!(tr.oegir(&format!("Mus{}haf", TUTUQ)), "Mushaf");
+    assert_eq!(tr.oegir(&format!("mus{}haf", TUTUQ)), "mushaf");
+    assert_eq!(tr.oegir(&format!("MUS{}HAF", TUTUQ)), "MUSHAF");
 
     // Standardizing existing separators
     let input_sh = format!("is{ODATIY_TIRNOQ}hoq");
-    assert_eq!(tr.oegir(&input_sh), format!("is{TUTUQ}hoq"));
+    assert_eq!(tr.oegir(&input_sh), "ishoq");
 
-    assert_eq!(tr.oegir("исҳоқ"), format!("is{TUTUQ}hoq"));
-    assert_eq!(tr.oegir("қашшоқ"), "qashshoq"); // Negative check (digraph)
+    assert_eq!(tr.oegir("исҳоқ"), "ishoq");
+    assert_eq!(tr.oegir("асҳоб"), "ashob");
+    assert_eq!(tr.oegir("мусҳаф"), "mushaf");
+
+    // these should be protected from changing
+    assert_eq!(tr.oegir("ishoq"), "ishoq");
+    assert_eq!(tr.oegir("ashob"), "ashob");
+    assert_eq!(tr.oegir("mushaf"), "mushaf");
 }
 
 // --- Group 2: Dictionary Healing & Normalization ---
@@ -96,11 +108,11 @@ fn test_joriy_apostrophe_and_quote_standardization() {
 
     // O' Normalization
     let input_o = format!("o{ODATIY_TIRNOQ}zbek");
-    assert_eq!(tr.oegir(&input_o), format!("o{OKINA}zbek"));
+    assert_eq!(tr.oegir(&input_o), "özbek");
 
     // G' Normalization
     let input_g = format!("g{TESKARI_TIRNOQ}alati");
-    assert_eq!(tr.oegir(&input_g), format!("g{OKINA}alati"));
+    assert_eq!(tr.oegir(&input_g), "ğalati");
 
     // General Glottal Stop Normalization
     let input_ma = format!("ma{ODATIY_TIRNOQ}rifat");
@@ -108,14 +120,14 @@ fn test_joriy_apostrophe_and_quote_standardization() {
 
     // S'H Normalization
     let input_mus = format!("Mus{ODATIY_TIRNOQ}haf");
-    assert_eq!(tr.oegir(&input_mus), format!("Mus{TUTUQ}haf"));
+    assert_eq!(tr.oegir(&input_mus), "Mushaf");
 
     // Quote preservation vs digraph standardization
     let input_q = format!(
         "Rus tilida 'shahar' so{}zi juda muhim.",
         crate::ODATIY_TIRNOQ
     );
-    let expected_q = format!("Rus tilida 'shahar' so{}zi juda muhim.", crate::OKINA);
+    let expected_q = "Rus tilida 'şahar' sözi juda muhim.".to_string();
     assert_eq!(tr.oegir(&input_q), expected_q);
 }
 
@@ -132,7 +144,7 @@ fn test_latex_protection_and_math_integrity_joriy() {
 
     // 2. Syntax and Command preservation
     let input_cmd = r"\textbf{Исҳоқ} ва $y^s$";
-    let expected_cmd = format!(r"\textbf{{Is{TUTUQ}hoq}} va $y^s$");
+    let expected_cmd = r"\textbf{Ishoq} va $y^s$";
     assert_eq!(tr.oegir(input_cmd), expected_cmd);
 
     // 3. Math Derivatives (Prime symbol) vs Tutuq
@@ -176,12 +188,12 @@ fn test_web_surgical_attribute_unmasking_joriy() {
 
     // Meta content transliteration
     let input_desc = r#"<meta name="description" content="Ғолиблар президент совғаси...">"#;
-    let expected_desc = r#"<meta name="description" content="Gʻoliblar prezident sovgʻasi...">"#;
+    let expected_desc = r#"<meta name="description" content="Ğoliblar prezident sovğasi...">"#;
     assert_eq!(tr.oegir(input_desc), expected_desc);
 
     // Tag integrity preservation
     let input_title = r#"<meta name="title" content="Ғолиблар">"#;
-    let expected_title = r#"<meta name="title" content="Gʻoliblar">"#;
+    let expected_title = r#"<meta name="title" content="Ğoliblar">"#;
     assert_eq!(tr.oegir(input_title), expected_title);
 }
 
@@ -192,21 +204,16 @@ fn test_joriy_validation_apostrophe_and_ambiguity_reporting() {
     let tr = common::setup_translator(Tartib::Joriy, None);
 
     // 1. Invalid Apostrophe
-    let invalid_input = format!("o{ODATIY_TIRNOQ}rdak");
+    let invalid_input = format!("ma{OKINA}no");
     let result_o = tr.tekshir(&invalid_input, 3);
     assert_eq!(result_o.hatolar.len(), 1);
-    assert_eq!(result_o.hatolar[0].soez, "o'rdak");
-
-    // 2. Syllabic Ambiguity
-    let result_sh = tr.tekshir("Ishoq", 3);
-    assert_eq!(result_sh.hatolar.len(), 1);
-    assert!(result_sh.hatolar[0].habar.to_lowercase().contains("tutuq"));
+    assert_eq!(result_o.hatolar[0].soez, "maʻno");
 }
 
 #[test]
 fn test_joriy_validation_multiline_coordinates() {
     let tr = common::setup_translator(Tartib::Joriy, None);
-    let input = format!("Yaxshi\nma{ODATIY_TIRNOQ}no\nan{TESKARI_TIRNOQ}ana");
+    let input = format!("Yaxşi\nma{ODATIY_TIRNOQ}no\nan{TESKARI_TIRNOQ}ana");
     let result = tr.tekshir(&input, 1);
 
     assert_eq!(result.jami, 2);

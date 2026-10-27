@@ -8,8 +8,8 @@ Latinga supports two primary standards:
 
 | Mode | Flag | Example (Cyrillic -> Latin) |
 | :--- | :--- | :--- |
-| **New Latin** (Proposed) | Default | шаҳар -> şahar, ўрдак -> ördak |
-| **Current Latin** | -j, --joriy | шаҳар -> shahar, ўрдак -> oʻrdak |
+| **New Latin** (Proposed) | Default | шаҳар -> şahar, ўрдак -> ördak, xato -> hato |
+| **Current Latin** | -j, --joriy | шаҳар -> şahar, ўрдак -> ördak |
 
 ## 2. Proper Nouns & Suffixes (-a, --atoqli)
 In the New Latin (Kelgusi) standard, suffixes attached to proper nouns should be separated by an apostrophe. Latinga automates this:

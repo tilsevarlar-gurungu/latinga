@@ -1,38 +1,40 @@
 # Latinga 🇺🇿
 
-Latinga — Rust tilida yozilgan, kengayuvchan va yuqori samaradorlikka ega oʻzbekcha kirill-lotin harf oʻgiruvchisidir. U katta hajmdagi matnlar va texnik hujjatlar (LaTeX, HTML, Markdown) bilan ishlashga moʻljallangan.
+Latinga — Rust tilida yozilgan, kengayuvçan va yuqori samaradorlikka ega özbekça kirill-lotin harf ögiruvçisidir. U katta hajmdagi matnlar va texnik hujjatlar (LaTeX, HTML, Markdown) bilan işlaşga möljallangan.
+
+**Diqqat**: Bitik 2026 yil oktabr alifbo islohotlari özgarişlari bilan yangilandi.
 
 ## Talaffuzi
 
-Latinga — /loˈtiŋɡa/ yani "lotinga" deb oʻqiladi. Chunki umid shulki kelajakda Oʻrtoq Turk Alifbosida yozamiz. 😊
+Latinga — /loˈtiŋɡa/ yani "lotinga" deb öqiladi. Çunki umid şulki kelajakda Örtoq Turk Alifbosida yozamiz. 😊
 
 ## Asosiy Xususiyatlar
 
-- **Aqlli Qalqon**: LaTeX formulalari, HTML tamgʻalari va Markdown bitik parchalarini avtomatik taniydi va ularni oʻzgartirmaydi.
-- **Ikki xil Imlo**: Ham **Joriy** (sh, ch, oʻ, gʻ), ham **Kelgusi** (ş, ç, ö, ğ) standartlarini qoʻllab-quvvatlaydi.
-- **Tutuq bilan ajratilgan atoqli otlar**: Kelgusi imloda atoqli otlardan kelishik qoʻshimchalarini avtomatik ajratadi (masalan: `Toshkentda` -> `Toşkent'da`).
-- **Yagona H**: Kelgusi imloda faqat bitta H qoladi va X harfi H bilan almashtiriladi (masalan: `Xato` -> `Hato`).
-- **Hujjat turlari**: ilova LaTeX, HTML, XML, Markdown hujjat turlari bilan ishlay oladi.
+- **Aqlli Qalqon**: LaTeX formulalari, HTML tamğalari va Markdown bitik parçalarini avtomatik taniydi va ularni özgartirmaydi.
+- **Ikki xil Imlo**: Ham **Joriy** (ş, ç, ö, ğ), ham **Kelgusi** (birlaştirilgan H va X) standartlarini qöllab-quvvatlaydi.
+- **Tutuq bilan ajratilgan atoqli otlar**: Kelgusi imloda atoqli otlardan kelişik qöşimçalarini avtomatik ajratadi (masalan: `Toshkentda` -> `Toşkent'da`).
+- **Yagona H**: Kelgusi imloda faqat bitta H qoladi va X harfi H bilan almaştiriladi (masalan: `Xato` -> `Hato`).
+- **Hujjat turlari**: ilova LaTeX, HTML, XML, Markdown hujjat turlari bilan işlay oladi.
 
-## 🚀 Foydali Bogʻlamalar
+## 🚀 Foydali Boğlamalar
 
-* **Oʻrnatuv:** [Oʻzbekcha oʻrnatuv qoʻllanmasi](https://github.com/tilsevarlar-gurungu/latinga/blob/main/docs/uz/OERNATUV.md).
-* **Koʻrgazma:** Ilovani [tilsevarlar-gurungu.github.io/latinga/](https://tilsevarlar-gurungu.github.io/latinga/) jonli veb sahifasida sinab koʻring.
+* **Örnatuv:** [Özbekça örnatuv qöllanmasi](https://github.com/tilsevarlar-gurungu/latinga/blob/main/docs/uz/OERNATUV.md).
+* **Körgazma:** Ilovani [tilsevarlar-gurungu.github.io/latinga/](https://tilsevarlar-gurungu.github.io/latinga/) jonli veb sahifasida sinab köring.
 * [English version of README](https://github.com/tilsevarlar-gurungu/latinga/blob/main/README_EN.md)
 
-## Tezkor Foydalanish
+## Tezkor Foydalaniş
 
 ```
-# Faylni yangi imloga oʻgirish (Kelgusi tartib)
+# Faylni tajribaviy kelgusi imloga ögiriş (Kelgusi tartib)
 $ latinga matn.txt
 ```
 
 ```
-# STDIN orqali amaldagi imloga oʻgirish (Joriy tartib)
+# STDIN orqali amaldagi imloga ögiriş (Joriy tartib)
 $ echo "кирилл" | latinga --joriy
 ```
 
 ```
-# Matndagi imlo xatolarini tekshirish
+# Matndagi imlo xatolarini tekşiriş
 $ latinga -t matn.txt
 ```

@@ -37,7 +37,7 @@ impl<'a> CyrillicMapper for ChunkProcessor<'a> {
         char_len: usize,
     ) -> Cow<'static, str> {
         let is_upper = c.is_uppercase();
-        let prev_was_hard = prev.map_or(false, |p| p == 'Ъ' || p == 'ъ');
+        let prev_was_hard = prev.is_some_and(|p| p == 'Ъ' || p == 'ъ');
 
         if prev_was_hard {
             if is_upper {
@@ -46,7 +46,7 @@ impl<'a> CyrillicMapper for ChunkProcessor<'a> {
                 Cow::Borrowed("e")
             }
         } else if (index == 0 && self.prev_char_boundary.is_none())
-            || prev.map_or(true, |p| !p.is_alphabetic())
+            || prev.is_none_or(|p| !p.is_alphabetic())
             || self.is_vowel(prev)
         {
             self.format_complex("Ye", is_upper, self.is_caps_context(index, char_len, prev))

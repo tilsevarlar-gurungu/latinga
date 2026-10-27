@@ -1,20 +1,20 @@
-# Latinga: Foydalanish Boʻyicha Toʻliq Qoʻllanma
+# Latinga: Foydalaniş Böyiça Töliq Qöllanma
 
-Latinga oʻzbek lotin alifbosiga oʻgiruvchi, buyruq satri ilovasidir. Ushbu qoʻllanmada asosiy imkoniyatlar misollar bilan tushuntiriladi.
+Latinga özbek lotin alifbosiga ögiruvçi, buyruq satri ilovasidir. Uşbu qöllanmada asosiy imkoniyatlar misollar bilan tuşuntiriladi.
 
 ## 1. Imlo Tartiblari
 
-Dastur ikki xil tartibda ishlaydi:
+Dastur ikki xil tartibda işlaydi:
 
 | Tartib | Bayroq | Misol (Kirill -> Lotin) |
 | :--- | :--- | :--- |
-| **Kelgusi** | Fitriy | шаҳар -> şahar, ўрдак -> ördak |
-| **Joriy** | -j, --joriy | шаҳар -> shahar, ўрдак -> oʻrdak |
+| **Kelgusi** | Fitriy | xalq -> halq, ma'no -> mano |
+| **Joriy** | -j, --joriy | shahar -> şahar, oʻrdak -> ördak |
 
 
-## 2. Atoqli Otlar va Qoʻshimchalar (-a, --atoqli)
+## 2. Atoqli Otlar va Qöşimçalar (-a, --atoqli)
 
-Kelgusi imloda atoqli otlardan keyin keladigan kelishik qoʻshimchalari tutuq belgisi (') bilan ajratilishi kerak.
+Kelgusi imloda atoqli otlardan keyin keladigan kelişik qöşimçalari tutuq belgisi (') bilan ajratilişi kerak.
 
 ```
 $ latinga -a "Samarqand,Termiz"
@@ -22,51 +22,51 @@ $ latinga -a "Samarqand,Termiz"
 # Chiqarma: "Termiz'ga Samarqand'dan boramiz."
 ```
 
-## 3. Matnni Qalqonlash
+## 3. Matnni Qalqonlaş
 
-Texnik hujjatlar (bitiklar, formulalar) oʻzgarib ketmasligi uchun Latinga bir necha xil himoya usulidan foydalanadi.
+Texnik hujjatlar (bitiklar, formulalar) özgarib ketmasligi uçun Latinga bir neça xil himoya usulidan foydalanadi.
 
 ### A. Avtomatik Qalqon
 
 Dastur quyidagilarni avtomatik taniydi:
 
-- **LaTeX**: $f'(x) = y$ va \cite{shahar2024} oʻzgarmaydi.
-- **HTML**: usttamgʻalar ichidagi content oʻgiriladi, lekin tamgʻaning oʻzi himoyalanadi.
-- **Email**: info@latinga.uz kabi manzillar oʻzgarmaydi.
-- **XML**: bu format juda egiluvchan boʻlganligi uchun, cheklangan qoʻllovga ega.
+- **LaTeX**: $f'(x) = y$ va \cite{shahar2024} özgarmaydi.
+- **HTML**: usttamğalar içidagi matn ögiriladi, lekin tamğaning özi himoyalanadi.
+- **Email**: info@latinga.uz kabi manzillar özgarmaydi.
+- **XML**: bu format juda egiluvçan bölganligi uçun, çeklangan qöllovga ega.
 
-### B. Umumiy Himoya {] ... [}
+### B. Umumiy Himoya  ...
 
-Agar matnning biror qismi mutloq oʻzgarmasligini xohlasangiz:
+Agar matnning biror qismi mutloq özgarmasligini xohlasangiz:
 
-- Kiritma: Ер ва {]Ер[}.
-- Chiqarma: Yer va Ер.
+- Kiritma: Yer va Ер.
+- Çiqarma: Yer va Yer.
 
 ### C. Qolipli Qalqon (-q, --qalqon)
 
-Murakkab qoliplarni oʻzgarishdan qalqonlash ya'ni oʻzgarmasdan qolishini ta'minlash uchun ishlatiladi:
+Murakkab qoliplarni özgarişdan qalqonlaş yaʼni özgarmasdan qolişini taʼminlaş uçun işlatiladi:
 
 ```
-$ latinga matn.txt -q "\*\*Ruscha:\*\* ([^\n]+)"
+$ latinga matn.txt -q "\*\*Rusça:\*\* ([^\n]+)"
 ```
 
-## 4. Maxsus Almashtirish (-m, --almashtir)
+## 4. Maxsus Almaştiriş (-m, --almaştir)
 
-Istalgan soʻzni boshqasi bilan almashtiradi:
+Istalgan sözni boşqasi bilan almaştiradi:
 
 ```
-# Nuqta-vergul (;) bilan bir nechta qoida berish
+# Nuqta-vergul (;) bilan bir neçta qoida beriş
 $ latinga matn.txt -m "октябрь:oktabr;сентябрь:sentabr"
 
-# Yoki qoidalar yozilgan faylni koʻrsatish
+# Yoki qoidalar yozilgan faylni körsatiş
 $ latinga matn.txt -m almashtiruvlar.txt
 ```
 
-## 5. Sinab koʻrish
+## 5. Sinab köriş
 
-Matndagi tutuq belgisi (joriy tartibda) va eskirgan harf mavjudligini tekshiradi (kelgusi tartibda).
+Matndagi tutuq belgisi (joriy tartibda) va eskirgan harf mavjudligini tekşiradi (kelgusi tartibda).
 ```
 $ latinga -t matn.txt
 ```
 
-Agar xato topilsa, dastur xato satri va ustunini koʻrsatadi hamda xato holati boʻlgan `exit status 1` bilan tugaydi.
+Agar xato topilsa, dastur xato satri va ustunini körsatadi hamda xato holati bölgan `exit status 1` bilan tugaydi.

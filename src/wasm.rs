@@ -47,10 +47,7 @@ impl Latinga {
     }
 
     pub fn qalqonlarni_yukla(&mut self, pattern: &str) -> bool {
-        match self.ichki.sozlama.qalqonlarni_yukla(pattern) {
-            Ok(_) => true,
-            Err(_) => false,
-        }
+        self.ichki.sozlama.qalqonlarni_yukla(pattern).is_ok()
     }
 
     pub fn oegir(&self, input: &str) -> String {

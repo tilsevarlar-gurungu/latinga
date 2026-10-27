@@ -9,7 +9,10 @@ use crate::shield::Shield;
 use crate::types::Chunk;
 use crate::{
     Sozlama, Tartib,
-    symbols::{BARCHA_TUTUQ_TURLARI, CYR_VOWELS, MAP_1_TO_1, OKINA, OKINA_STR, TUTUQ, TUTUQ_STR},
+    symbols::{
+        BARCHA_TUTUQ_TURLARI, CYR_VOWELS, MAP_1_TO_1, ODATIY_TIRNOQ, OKINA, OKINA_STR, TUTUQ,
+        TUTUQ_STR,
+    },
 };
 use regex::Regex;
 use std::borrow::Cow;
@@ -17,8 +20,13 @@ use std::io::{self, Write};
 use std::sync::LazyLock;
 
 // Optimization: Pre-compile regex for 'sh'/'ch' collision detection in Joriy mode
-pub(crate) static RE_SH: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"(?i)^(is|as|mus)(hoq|hob|haf)$").unwrap());
+pub(crate) static RE_SH: LazyLock<Regex> = LazyLock::new(|| {
+    let pattern = format!(
+        r"(?i)^(is|as|mus)(?:{}|{}|{})?(hoq|hob|haf)$",
+        OKINA, TUTUQ, ODATIY_TIRNOQ
+    );
+    Regex::new(&pattern).unwrap()
+});
 
 /// The main entry point for the transliteration logic.
 /// Stateless wrapper around configuration.
@@ -106,25 +114,49 @@ impl<'a> ChunkProcessor<'a> {
             let c = rest.chars().next().unwrap();
             let char_len = c.len_utf8();
 
-            let is_boundary = prev_char.map_or(true, |p| !p.is_alphabetic());
+            let is_boundary = prev_char.is_none_or(|p| !p.is_alphabetic());
 
-            // 1. Trie Lookup (Healing / Exceptions / Proper Nouns)
-            // Only performed at word boundaries for performance
+            // 0. RE_SH Special Case (mushaf, ishoq, ashob - with or without apostrophe)
+            // Checked at word boundaries on raw text before character conversion
             if is_boundary && c.is_alphabetic() {
-                if let Some((match_bytes, replacement)) = self.find_trie_match(byte_idx) {
-                    // Flush pending word buffer before writing direct replacement
+                let word_len = rest
+                    .find(|sc: char| !sc.is_alphabetic() && !BARCHA_TUTUQ_TURLARI.contains(&sc))
+                    .unwrap_or(rest.len());
+                let raw_word = &rest[..word_len];
+
+                if let Some(caps) = RE_SH.captures(raw_word) {
                     if !word_buffer.is_empty() {
                         self.flush_word(writer, word_buffer)?;
                     }
 
-                    let original = &self.text[byte_idx..byte_idx + match_bytes];
-                    let cased_replacement = self.apply_casing(&replacement, original);
+                    let combined = format!("{}{}", &caps[1], &caps[2]);
+                    let cased_replacement = self.apply_casing(&combined, raw_word);
                     writer.write_all(cased_replacement.as_bytes())?;
 
-                    prev_char = original.chars().last();
-                    byte_idx += match_bytes;
+                    prev_char = raw_word.chars().last();
+                    byte_idx += word_len;
                     continue;
                 }
+            }
+
+            // 1. Trie Lookup (Healing / Exceptions / Proper Nouns)
+            // Only performed at word boundaries for performance
+            if is_boundary
+                && c.is_alphabetic()
+                && let Some((match_bytes, replacement)) = self.find_trie_match(byte_idx)
+            {
+                // Flush pending word buffer before writing direct replacement
+                if !word_buffer.is_empty() {
+                    self.flush_word(writer, word_buffer)?;
+                }
+
+                let original = &self.text[byte_idx..byte_idx + match_bytes];
+                let cased_replacement = self.apply_casing(&replacement, original);
+                writer.write_all(cased_replacement.as_bytes())?;
+
+                prev_char = original.chars().last();
+                byte_idx += match_bytes;
+                continue;
             }
 
             // 2. Character Conversion
@@ -134,12 +166,20 @@ impl<'a> ChunkProcessor<'a> {
             // Connecting hyphens (e.g., "tarbiyaviy-axloqiy") are treated as part of the word
             // to allow suffix analysis in Kelgusi mode.
             let is_connecting_hyphen = c == '-'
-                && prev_char.map_or(false, |p| p.is_alphabetic())
+                && prev_char.is_some_and(|p| p.is_alphabetic())
                 && self
                     .peek_char(byte_idx + char_len)
-                    .map_or(false, |n| n.is_alphabetic());
+                    .is_some_and(|n| n.is_alphabetic());
 
-            if c.is_alphabetic() || is_connecting_hyphen {
+            // 1. Define what counts as an inner apostrophe (surrounded by letters)
+            let is_inner_apostrophe = BARCHA_TUTUQ_TURLARI.contains(&c)
+                && prev_char.is_some_and(|p| p.is_alphabetic())
+                && self
+                    .peek_char(byte_idx + char_len)
+                    .is_some_and(|n| n.is_alphabetic());
+
+            // 2. Include it in your word buffer condition
+            if c.is_alphabetic() || is_connecting_hyphen || is_inner_apostrophe {
                 word_buffer.push_str(&converted);
             } else {
                 if !word_buffer.is_empty() {
@@ -189,7 +229,6 @@ impl<'a> ChunkProcessor<'a> {
                 let text_to_check = text_cow.as_ref();
                 if let Some(caps) = RE_SH.captures(text_to_check) {
                     writer.write_all(caps[1].as_bytes())?;
-                    writer.write_all(TUTUQ_STR.as_bytes())?;
                     writer.write_all(caps[2].as_bytes())?;
                 } else {
                     writer.write_all(text_to_check.as_bytes())?;
@@ -204,25 +243,22 @@ impl<'a> ChunkProcessor<'a> {
                     let should_check = (c_lower as u32) >= 128
                         || self.config.lughat.proper_noun_first_chars[c_lower as usize];
 
-                    if should_check {
-                        if let Some((byte_len, stored_proper_noun)) = self
+                    if should_check
+                        && let Some((byte_len, stored_proper_noun)) = self
                             .config
                             .lughat
                             .proper_nouns_trie
                             .find_longest_prefix(word_buffer)
-                        {
-                            if byte_len < word_buffer.len() {
-                                let stem = &word_buffer[..byte_len];
-                                if Self::is_valid_casing(stem, stored_proper_noun) {
-                                    let suffix = &word_buffer[byte_len..];
-                                    if self.config.lughat.suffixes.contains(&suffix.to_lowercase())
-                                    {
-                                        writer.write_all(stem.as_bytes())?;
-                                        writer.write_all(b"'")?;
-                                        writer.write_all(suffix.as_bytes())?;
-                                        found_suffix = true;
-                                    }
-                                }
+                        && byte_len < word_buffer.len()
+                    {
+                        let stem = &word_buffer[..byte_len];
+                        if Self::is_valid_casing(stem, stored_proper_noun) {
+                            let suffix = &word_buffer[byte_len..];
+                            if self.config.lughat.suffixes.contains(&suffix.to_lowercase()) {
+                                writer.write_all(stem.as_bytes())?;
+                                writer.write_all(b"'")?;
+                                writer.write_all(suffix.as_bytes())?;
+                                found_suffix = true;
                             }
                         }
                     }
@@ -251,24 +287,26 @@ impl<'a> ChunkProcessor<'a> {
                 if let Some(p) = prev {
                     let prev_lower = p.to_ascii_lowercase();
 
-                    if (prev_lower == 'o' || prev_lower == 'g') && p.is_alphabetic() {
-                        return (Cow::Borrowed(OKINA_STR), char_len);
+                    if (prev_lower == 'o') && p.is_alphabetic() {
+                        return (Cow::Borrowed("ö"), char_len);
+                    }
+                    if (prev_lower == 'g') && p.is_alphabetic() {
+                        return (Cow::Borrowed("ğ"), char_len);
                     }
 
-                    if is_kelgusi && p.is_alphabetic() {
-                        if let Some(next) = self.peek_char(index + char_len) {
-                            if next.is_alphabetic() {
-                                return (Cow::Borrowed(""), char_len);
-                            }
-                        }
+                    if is_kelgusi
+                        && p.is_alphabetic()
+                        && let Some(next) = self.peek_char(index + char_len)
+                        && next.is_alphabetic()
+                    {
+                        return (Cow::Borrowed(""), char_len);
                     }
 
-                    if p.is_alphabetic() {
-                        if let Some(next) = self.peek_char(index + char_len) {
-                            if next.is_alphabetic() {
-                                return (Cow::Borrowed(TUTUQ_STR), char_len);
-                            }
-                        }
+                    if p.is_alphabetic()
+                        && let Some(next) = self.peek_char(index + char_len)
+                        && next.is_alphabetic()
+                    {
+                        return (Cow::Borrowed(TUTUQ_STR), char_len);
                     }
                 }
                 (Cow::Owned(c.to_string()), char_len)
@@ -311,59 +349,25 @@ impl<'a> ChunkProcessor<'a> {
                 ),
                 char_len,
             ),
-            'Ғ' | 'ғ' => {
-                let rep = if is_kelgusi {
-                    "ğ"
-                } else {
-                    return (
-                        Cow::Owned(
-                            self.format_complex(
-                                &format!("G{OKINA}"),
-                                c.is_uppercase(),
-                                self.is_caps_context(index, char_len, prev),
-                            )
-                            .into_owned(),
-                        ),
-                        char_len,
-                    );
-                };
-                (
-                    self.format_complex(
-                        rep,
-                        c.is_uppercase(),
-                        self.is_caps_context(index, char_len, prev),
-                    ),
-                    char_len,
-                )
-            }
-            'Ў' | 'ў' => {
-                let rep = if is_kelgusi {
-                    "ö"
-                } else {
-                    return (
-                        Cow::Owned(
-                            self.format_complex(
-                                &format!("o{OKINA}"),
-                                c.is_uppercase(),
-                                self.is_caps_context(index, char_len, prev),
-                            )
-                            .into_owned(),
-                        ),
-                        char_len,
-                    );
-                };
-                (
-                    self.format_complex(
-                        rep,
-                        c.is_uppercase(),
-                        self.is_caps_context(index, char_len, prev),
-                    ),
-                    char_len,
-                )
-            }
+            'Ғ' | 'ғ' => (
+                self.format_complex(
+                    "ğ",
+                    c.is_uppercase(),
+                    self.is_caps_context(index, char_len, prev),
+                ),
+                char_len,
+            ),
+            'Ў' | 'ў' => (
+                self.format_complex(
+                    "ö",
+                    c.is_uppercase(),
+                    self.is_caps_context(index, char_len, prev),
+                ),
+                char_len,
+            ),
             'Ш' | 'ш' | 'Щ' | 'щ' => (
                 self.format_complex(
-                    if is_kelgusi { "ş" } else { "sh" },
+                    "ş",
                     c.is_uppercase(),
                     self.is_caps_context(index, char_len, prev),
                 ),
@@ -371,14 +375,14 @@ impl<'a> ChunkProcessor<'a> {
             ),
             'Ч' | 'ч' => (
                 self.format_complex(
-                    if is_kelgusi { "ç" } else { "ch" },
+                    "ç",
                     c.is_uppercase(),
                     self.is_caps_context(index, char_len, prev),
                 ),
                 char_len,
             ),
             // Latin Logic (Delegated to Trait)
-            's' | 'S' | 'c' | 'C' | 'o' | 'O' | 'g' | 'G' if is_kelgusi => {
+            's' | 'S' | 'c' | 'C' | 'o' | 'O' | 'g' | 'G' => {
                 self.handle_latin_to_latin(index, c, char_len, prev)
             }
             _ => (self.handle_default(c), char_len),
@@ -394,19 +398,18 @@ impl<'a> ChunkProcessor<'a> {
         let should_check_healing = (c_lower_char as u32) >= 128
             || self.config.lughat.healing_first_chars[c_lower_char as usize];
 
-        if should_check_healing {
-            if let Some((len, replacement)) =
+        if should_check_healing
+            && let Some((len, replacement)) =
                 self.config.lughat.healing_trie.find_longest_prefix(rest)
-            {
-                let is_proper_noun = self
-                    .config
-                    .lughat
-                    .proper_nouns_trie
-                    .find_longest_prefix(&rest[..len])
-                    .map_or(false, |(pn_len, _)| pn_len == len);
-                if !is_proper_noun {
-                    return Some((len, replacement.to_string()));
-                }
+        {
+            let is_proper_noun = self
+                .config
+                .lughat
+                .proper_nouns_trie
+                .find_longest_prefix(&rest[..len])
+                .is_some_and(|(pn_len, _)| pn_len == len);
+            if !is_proper_noun {
+                return Some((len, replacement.to_string()));
             }
         }
 
@@ -424,42 +427,41 @@ impl<'a> ChunkProcessor<'a> {
         let should_check_proper = (c_lower_char as u32) >= 128
             || self.config.lughat.proper_noun_first_chars[c_lower_char as usize];
 
-        if should_check_proper {
-            if let Some((stem_len, stored_proper_noun)) = self
+        if should_check_proper
+            && let Some((stem_len, stored_proper_noun)) = self
                 .config
                 .lughat
                 .proper_nouns_trie
                 .find_longest_prefix(rest)
-            {
-                let input_stem = &rest[..stem_len];
+        {
+            let input_stem = &rest[..stem_len];
 
-                if !Self::is_valid_casing(input_stem, stored_proper_noun) {
-                    return None;
-                }
+            if !Self::is_valid_casing(input_stem, stored_proper_noun) {
+                return None;
+            }
 
-                let tail_slice = &rest[stem_len..];
-                let suffix_len = tail_slice
-                    .find(|sc: char| !sc.is_alphabetic())
-                    .unwrap_or(tail_slice.len());
-                let raw_suffix = &tail_slice[..suffix_len];
+            let tail_slice = &rest[stem_len..];
+            let suffix_len = tail_slice
+                .find(|sc: char| !sc.is_alphabetic())
+                .unwrap_or(tail_slice.len());
+            let raw_suffix = &tail_slice[..suffix_len];
 
-                let suffix_valid = raw_suffix.is_empty()
-                    || self
-                        .config
-                        .lughat
-                        .suffixes
-                        .contains(&raw_suffix.to_lowercase());
+            let suffix_valid = raw_suffix.is_empty()
+                || self
+                    .config
+                    .lughat
+                    .suffixes
+                    .contains(&raw_suffix.to_lowercase());
 
-                if suffix_valid {
-                    let mut res = input_stem.to_string();
-                    if !raw_suffix.is_empty() {
-                        if self.config.tartib == Tartib::Kelgusi {
-                            res.push('\'');
-                        }
-                        res.push_str(raw_suffix);
+            if suffix_valid {
+                let mut res = input_stem.to_string();
+                if !raw_suffix.is_empty() {
+                    if self.config.tartib == Tartib::Kelgusi {
+                        res.push('\'');
                     }
-                    return Some((stem_len + suffix_len, res));
+                    res.push_str(raw_suffix);
                 }
+                return Some((stem_len + suffix_len, res));
             }
         }
         None
@@ -500,8 +502,8 @@ impl<'a> ChunkProcessor<'a> {
     }
 
     pub(crate) fn is_caps_context(&self, i: usize, c_len: usize, prev: Option<char>) -> bool {
-        let prev_caps = prev.map_or(false, char::is_uppercase);
-        let next_caps = self.peek_char(i + c_len).map_or(false, |c| {
+        let prev_caps = prev.is_some_and(char::is_uppercase);
+        let next_caps = self.peek_char(i + c_len).is_some_and(|c| {
             let is_end = i + c_len + c.len_utf8() >= self.text.len();
             if is_end && self.next_is_shielded {
                 false
@@ -565,12 +567,11 @@ impl<'a> ChunkProcessor<'a> {
             let mut input_chars = input_stem.chars();
             let mut stored_chars = stored_value.chars();
 
-            if let (Some(ic), Some(_)) = (input_chars.next(), stored_chars.next()) {
-                if ic.is_uppercase() {
-                    if input_chars.as_str() == stored_chars.as_str() {
-                        return true;
-                    }
-                }
+            if let (Some(ic), Some(_)) = (input_chars.next(), stored_chars.next())
+                && ic.is_uppercase()
+                && input_chars.as_str() == stored_chars.as_str()
+            {
+                return true;
             }
         }
         false

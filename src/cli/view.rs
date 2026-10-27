@@ -42,7 +42,7 @@ pub fn print_uz_help() {
 FOYDALANIŞ: latinga [FAYLLAR] [BAYROQLAR]
 
 BAYROQLAR:
-  -j, --joriy          Joriy imlo (sh, ch, oʻ, gʻ, x, h) - Fitriy holat: Yangi imlo (ş, ç, ö, ğ, h)
+  -j, --joriy          Joriy imlo (ş, ç, ö, ğ, x, h) - Fitriy holat: Yangi imlo (h)
   -u, --ustidan-yoz    Fayllarni öz joyida özgartiriş (ehtiyot böling!)
   -f, --fayl-qolip     Fayl qolipi (masalan: "kitoblar/*.txt")
   -c, --chiqarma       Yangi fayl nomi qöşimçasi (fitrat: "-joriyga" yoki "-kelgusiga")
@@ -75,7 +75,7 @@ pub fn print_en_help() {
 USAGE: latinga [FILES] [FLAGS]
 
 FLAGS:
-  -j, --joriy          Use current orthography (sh, ch, oʻ, gʻ, x, h) - Default: Future (ş, ç, ö, ğ, h)
+  -j, --joriy          Use current orthography (ş, ç, ö, ğ, x, h) - Default: Future (h)
   -u, --ustidan-yoz    Overwrite files in-place
   -f, --fayl-qolip     Input glob pattern (e.g. "docs/*.md")
   -c, --chiqarma       Output filename suffix (default: "-joriyga" or "-kelgusiga")

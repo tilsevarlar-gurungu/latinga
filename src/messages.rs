@@ -5,8 +5,9 @@ pub enum HabarKaliti {
     TekshiruvBoshi,
     TekshiruvHatosiNomi,
     TutuqUchunMaslahat,
+    EskiAjratuvchiTutuqAniqlandi,
     EskiQoeshHarf(String),
-    QoeshHarfTutuqlaAjratilsin,
+    TutuqmasAniqlandi,
     QoeshimchaHatolar(usize),
     JarayonKetmoqda(String),
     JarayonHatosi(String, String),
@@ -23,16 +24,17 @@ impl HabarKaliti {
                 Self::TutuqUchunMaslahat => Cow::Borrowed(
                     "Maslahat: Avtomatik tuzatish uchun 'latinga' buyrugʻini ishlating.",
                 ),
+                Self::EskiAjratuvchiTutuqAniqlandi => {
+                    Cow::Borrowed("S va H harflari endi tutuq bilan ajratilmaydi.")
+                }
+                Self::TutuqmasAniqlandi => Cow::Borrowed("Nostandart tutuq belgisi aniqlandi."),
+                Self::QoeshimchaHatolar(n) => {
+                    Cow::Owned(format!("  ... va yana {} ta xatolik.", n))
+                }
                 Self::EskiQoeshHarf(s) => Cow::Owned(format!(
                     "Eski imlo belgisi aniqlandi. '{}' harfidan foydalaning.",
                     s
                 )),
-                Self::QoeshHarfTutuqlaAjratilsin => {
-                    Cow::Borrowed("Shubhali 'sh/ch' birikmasi. Tutuq belgisi bilan ajrating.")
-                }
-                Self::QoeshimchaHatolar(n) => {
-                    Cow::Owned(format!("  ... va yana {} ta xatolik.", n))
-                }
                 Self::JarayonKetmoqda(p) => Cow::Owned(format!("Oʻgirilmoqda: {p}")),
                 Self::JarayonHatosi(p, e) => Cow::Owned(format!("Xatolik! {p}: {e}")),
                 Self::JarayonMuvaffaqiyati(n) => {
@@ -46,13 +48,14 @@ impl HabarKaliti {
                 Self::TutuqUchunMaslahat => {
                     Cow::Borrowed("Maslahat: Avtomatik tuzatiş uchun 'latinga' buyruğini işlating.")
                 }
+                Self::EskiAjratuvchiTutuqAniqlandi => {
+                    Cow::Borrowed("S va H harflari endi tutuq bilan ajratilmaydi.")
+                }
                 Self::EskiQoeshHarf(s) => Cow::Owned(format!(
                     "Eski imlo belgisi aniqlandi. '{}' harfidan foydalaning.",
                     s
                 )),
-                Self::QoeshHarfTutuqlaAjratilsin => {
-                    Cow::Borrowed("Şubhali 'sh/ch' birikmasi. Tutuq belgisi bilan ajrating.")
-                }
+                Self::TutuqmasAniqlandi => Cow::Borrowed("Nostandart tutuq belgisi aniqlandi."),
                 Self::QoeshimchaHatolar(n) => {
                     Cow::Owned(format!("  ... va yana {} ta hatolik.", n))
                 }

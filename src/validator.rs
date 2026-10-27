@@ -1,9 +1,7 @@
 use crate::shield::Shield;
 use crate::symbols::KELGUSI_MAP;
 use crate::types::Chunk;
-use crate::{
-    BARCHA_TUTUQ_TURLARI, OKINA, Sozlama, TUTUQ, Tartib, TekshiruvHatosi, TekshiruvHulosasi,
-};
+use crate::{BARCHA_TUTUQ_TURLARI, Sozlama, TUTUQ, Tartib, TekshiruvHatosi, TekshiruvHulosasi};
 use std::borrow::Cow;
 
 /// Validator holds a reference to the configuration.
@@ -72,7 +70,6 @@ impl<'a> Validator<'a> {
         limit: usize,
     ) {
         let mut word_start: Option<(usize, usize)> = None;
-        let mut prev_char: Option<char> = None;
 
         for (byte_idx, c) in text.char_indices() {
             // 1. Handle Newlines
@@ -84,7 +81,6 @@ impl<'a> Validator<'a> {
                 }
                 *line += 1;
                 *col = 1;
-                prev_char = Some(c);
                 continue;
             }
 
@@ -96,8 +92,8 @@ impl<'a> Validator<'a> {
                     word_start = Some((byte_idx, *col));
                 }
 
-                if self.config.tartib == Tartib::Joriy && BARCHA_TUTUQ_TURLARI.contains(&c) {
-                    if let Some(msg) = self.check_apostrophe_inline(c, prev_char) {
+                if self.config.tartib == Tartib::Joriy && BARCHA_TUTUQ_TURLARI.contains(&c)
+                    && let Some(msg) = self.check_apostrophe_inline(c) {
                         *total_count += 1;
                         if errors.len() < limit {
                             let start_idx = word_start.unwrap().0;
@@ -112,7 +108,6 @@ impl<'a> Validator<'a> {
                             });
                         }
                     }
-                }
             } else {
                 if let Some((start_idx, start_col)) = word_start {
                     let word = &text[start_idx..byte_idx];
@@ -122,7 +117,6 @@ impl<'a> Validator<'a> {
             }
 
             *col += 1;
-            prev_char = Some(c);
         }
 
         if let Some((start_idx, start_col)) = word_start {
@@ -139,26 +133,12 @@ impl<'a> Validator<'a> {
     }
 
     #[inline(always)]
-    fn check_apostrophe_inline(&self, c: char, prev: Option<char>) -> Option<Cow<'static, str>> {
-        if c == OKINA || c == TUTUQ {
-            return None;
+    fn check_apostrophe_inline(&self, c: char) -> Option<Cow<'static, str>> {
+        if c == TUTUQ {
+            None
+        } else {
+            Some(crate::HabarKaliti::TutuqmasAniqlandi.koersat(&self.config.tartib))
         }
-
-        if matches!(c, '\'' | '`' | '‘' | '’') {
-            if let Some(p) = prev {
-                let pl = p.to_ascii_lowercase();
-                if pl == 'o' || pl == 'g' {
-                    return Some(
-                        crate::HabarKaliti::EskiQoeshHarf(OKINA.to_string())
-                            .koersat(&self.config.tartib),
-                    );
-                }
-            }
-            return Some(
-                crate::HabarKaliti::EskiQoeshHarf(TUTUQ.to_string()).koersat(&self.config.tartib),
-            );
-        }
-        None
     }
 
     fn check_word<'b>(
@@ -183,8 +163,8 @@ impl<'a> Validator<'a> {
 
                 if has_s && has_h {
                     let wl = word.to_lowercase();
-                    if let Some(mat) = crate::engine::RE_SH.find(&wl) {
-                        if !word.chars().any(|c| BARCHA_TUTUQ_TURLARI.contains(&c)) {
+                    if let Some(mat) = crate::engine::RE_SH.find(&wl)
+                        && !word.chars().any(|c| BARCHA_TUTUQ_TURLARI.contains(&c)) {
                             *total_count += 1;
                             if !is_counting_only {
                                 let char_offset = word[..mat.start()].chars().count();
@@ -192,12 +172,11 @@ impl<'a> Validator<'a> {
                                     qator: line,
                                     ustun: col + char_offset,
                                     soez: Cow::Borrowed(word),
-                                    habar: crate::HabarKaliti::QoeshHarfTutuqlaAjratilsin
+                                    habar: crate::HabarKaliti::EskiAjratuvchiTutuqAniqlandi
                                         .koersat(&self.config.tartib),
                                 });
                             }
                         }
-                    }
                 }
             }
             Tartib::Kelgusi => {

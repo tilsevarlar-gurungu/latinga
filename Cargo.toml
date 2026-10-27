@@ -1,6 +1,6 @@
 [package]
 name = "latinga"
-version = "0.1.3"
+version = "0.2.0"
 edition = "2024"
 description = "High-performance, Zero-Copy Uzbek Cyrillic-Latin transliterator."
 license = "MIT OR Apache-2.0"
@@ -17,19 +17,27 @@ name = "latinga"
 required-features = ["cli"]
 
 [dependencies]
-regex = { version = "1.11", default-features = false, features = ["std", "perf", "unicode-perl", "unicode-case"] }
+regex = { version = "1.13", default-features = false, features = [
+    "std",
+    "perf",
+    "unicode-perl",
+    "unicode-case",
+] }
 anyhow = "1.0"
 aho-corasick = "1.1"
-serde = { version = "1.0", default-features = false, features = ["derive", "alloc"] }
+serde = { version = "1.0", default-features = false, features = [
+    "derive",
+    "alloc",
+] }
 memmap2 = "0.9"
 
 # --- Optional Dependencies ---
-clap = { version = "4.5", features = ["derive"], optional = true }
+clap = { version = "4.6", features = ["derive"], optional = true }
 glob = { version = "0.3", optional = true }
-tempfile = { version = "3.12", optional = true }
-rayon = { version = "1.10", optional = true }
-wasm-bindgen = { version = "0.2.106", optional = true }
-serde-wasm-bindgen = {version = "0.4", optional = true}
+tempfile = { version = "3.27", optional = true }
+rayon = { version = "1.12", optional = true }
+wasm-bindgen = { version = "0.2.129", optional = true }
+serde-wasm-bindgen = { version = "0.6", optional = true }
 
 [features]
 default = ["cli"]
@@ -40,15 +48,15 @@ cli = ["clap", "glob", "tempfile", "rayon"]
 
 # 1. Native-only dev-dependencies (CLI tests & Benchmarks)
 [target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies]
-criterion = "0.5"  # Moved here!
-assert_cmd = "2.0"
+criterion = "0.8"  # Moved here!
+assert_cmd = "2.2"
 predicates = "3.1"
-tempfile = "3.12"
+tempfile = "3.27"
 glob = "0.3"
 
 # 2. WASM-only dev-dependencies
 [target.'cfg(target_arch = "wasm32")'.dev-dependencies]
-wasm-bindgen-test = "0.3.56"
+wasm-bindgen-test = "0.3.79"
 
 [package.metadata.wasm-pack.profile.release]
 wasm-opt = false

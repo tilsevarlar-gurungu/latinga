@@ -105,11 +105,10 @@ impl<'a> TokenIterator<'a> {
                 let valid_start = start == 0 || !is_word_char(input, start - 1);
                 let valid_end = end == input.len() || !is_word_char(input, end);
 
-                if valid_start && valid_end {
-                    if let Some(slice) = mask.get_mut(start..end) {
+                if valid_start && valid_end
+                    && let Some(slice) = mask.get_mut(start..end) {
                         slice.fill(true);
                     }
-                }
             }
         }
     }
@@ -135,8 +134,8 @@ impl<'a> TokenIterator<'a> {
         let c = self.peek(0)?;
 
         // Universal Shield {] ... [}
-        if c == '{' && self.peek(1) == Some(']') {
-            if let Some(end_idx) = self.scan_universal_shield() {
+        if c == '{' && self.peek(1) == Some(']')
+            && let Some(end_idx) = self.scan_universal_shield() {
                 // inner_start skips the opening "{]"
                 let inner_start = start + 2;
                 // inner_end stops before the closing "[}"
@@ -151,20 +150,18 @@ impl<'a> TokenIterator<'a> {
                 }
                 return Some(Chunk::Shielded(&self.input[inner_start..inner_end]));
             }
-        }
 
         // LaTeX Shield
-        if matches!(c, '\\' | '%' | '$') {
-            if let Some(end_idx) = self.scan_latex() {
+        if matches!(c, '\\' | '%' | '$')
+            && let Some(end_idx) = self.scan_latex() {
                 let chunk = Chunk::Shielded(&self.input[start..end_idx]);
                 self.cursor = end_idx;
                 return Some(chunk);
             }
-        }
 
         // HTML Smart Shield
-        if c == '<' {
-            if let Some((end_idx, is_opaque)) = self.scan_html() {
+        if c == '<'
+            && let Some((end_idx, is_opaque)) = self.scan_html() {
                 if is_opaque {
                     let chunk = Chunk::Shielded(&self.input[start..end_idx]);
                     self.cursor = end_idx;
@@ -175,7 +172,6 @@ impl<'a> TokenIterator<'a> {
                     return self.buffer.pop_front();
                 }
             }
-        }
 
         // 3. Neutral State (Consume 'Safe' chars)
         let bytes = self.input.as_bytes();
@@ -326,16 +322,14 @@ impl<'a> TokenIterator<'a> {
             }
             let cmd_name = &self.input[self.cursor + 1..self.cursor + i];
 
-            if cmd_name == "begin" {
-                if let Some(env_name) = self.extract_braced_content(self.cursor + i) {
-                    if LATEX_VERBATIM_ENVIRONMENTS.contains(&env_name) {
+            if cmd_name == "begin"
+                && let Some(env_name) = self.extract_braced_content(self.cursor + i)
+                    && LATEX_VERBATIM_ENVIRONMENTS.contains(&env_name) {
                         let closer = format!("\\end{{{}}}", env_name);
                         if let Some(close_pos) = self.input[self.cursor..].find(&closer) {
                             return Some(self.cursor + close_pos + closer.len());
                         }
                     }
-                }
-            }
 
             if LATEX_STRUCTURAL_COMMANDS.contains(&cmd_name) {
                 return self.scan_balanced_braces(self.cursor + i);
@@ -423,7 +417,7 @@ impl<'a> Iterator for TokenIterator<'a> {
 // --- UTILS ---
 
 fn is_word_char(text: &str, idx: usize) -> bool {
-    text.as_bytes().get(idx).map_or(false, |&b| {
+    text.as_bytes().get(idx).is_some_and(|&b| {
         let c = b as char;
         c.is_alphanumeric() || c == '_'
     })

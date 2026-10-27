@@ -35,7 +35,7 @@ fn test_joriy_conversion_cyrillic_to_latin() {
     let input = "Мактаб ва Ўқувчи";
     let output = router.oegir(input);
 
-    assert_eq!(output, "Maktab va Oʻquvchi");
+    assert_eq!(output, "Maktab va Öquvçi");
 }
 
 #[wasm_bindgen_test]
@@ -107,7 +107,7 @@ fn test_joriy_validation_structure() {
 fn test_kelgusi_validation_logic() {
     let router = Latinga::yangi(false); // Kelgusi
 
-    // "shahar" is valid in Joriy but invalid in Kelgusi (should be "şahar")
+    // "shahar" is invalid in Kelgusi (should be "şahar")
     let input = "katta shahar";
 
     let js_val = router.tekshir(input, 10);
@@ -141,7 +141,7 @@ fn test_validation_limit_behavior() {
 #[wasm_bindgen_test]
 fn test_validation_success_case() {
     let router = Latinga::yangi(true);
-    let input = "Maktab va Oʻquvchi"; // Correct Joriy spelling
+    let input = "Maktab va Öquvçi"; // Correct Joriy spelling
 
     let js_val = router.tekshir(input, 10);
     let summary: TestSummary = serde_wasm_bindgen::from_value(js_val).unwrap();

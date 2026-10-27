@@ -30,7 +30,7 @@ impl Trie {
     #[must_use]
     pub fn is_empty(&self) -> bool {
         // Check if root has any children
-        self.nodes.get(0).map_or(true, |n| n.children.is_empty())
+        self.nodes.first().is_none_or(|n| n.children.is_empty())
     }
 
     pub fn insert(&mut self, key: &str, value: &str) {

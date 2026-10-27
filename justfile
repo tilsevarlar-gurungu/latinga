@@ -52,3 +52,7 @@ stress-test-built:
     @python3 -c "print('Oʻzbekiston - kelajagi buyuk davlat! Maʼno va mantiq.\n' * 1000000)" | zsh -c '/usr/bin/time -v ./target/release/latinga -c="-baseline5" > /dev/null'
     @echo "✅ Stress test complete."
 stress-test: build-native stress-test-built
+
+# Run a local web server for the WASM demo on port 8881
+serve-web:
+    python3 -m http.server 8881 --directory web

@@ -2,7 +2,7 @@
 
 use assert_cmd::Command;
 use assert_cmd::cargo_bin;
-use latinga::{HabarKaliti, OKINA, TUTUQ, Tartib};
+use latinga::{HabarKaliti, TUTUQ, Tartib};
 use predicates::prelude::*;
 use std::fs;
 use tempfile::tempdir;
@@ -47,7 +47,7 @@ fn test_stdin_joriy_mode_standardizes_vowels() {
     let mut cmd = Command::new(cargo_bin!("latinga"));
     // Using -j for joriy mode.
     // We expect the official O_OKINA constant character.
-    let expected = format!("o{OKINA}rdak");
+    let expected = "ördak";
 
     cmd.arg("-j")
         .write_stdin("ўрдак")
@@ -186,10 +186,10 @@ fn test_latex_shielding_preserves_comments_and_commands() {
     let output =
         fs::read_to_string(out_path).expect("Output file was not found with -joriyga suffix");
 
-    assert!(output.contains(r"\section{Kirish}"));
+    assert!(output.contains(r"\section{Kiriş}"));
     assert!(output.contains(r"% Бу изоҳ (comment)"));
     assert!(output.contains(r"\cite{shahar2024}"));
-    assert!(output.contains("shahar bor"));
+    assert!(output.contains("şahar bor"));
 }
 
 // --- GROUP 5: VALIDATION & DIAGNOSTICS (-s, -t) ---

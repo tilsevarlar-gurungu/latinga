@@ -108,11 +108,10 @@ impl Dictionary {
                 .to_lowercase();
 
             // Populate the Fast Filter
-            if let Some(first_char) = broken.chars().next() {
-                if (first_char as usize) < 256 {
+            if let Some(first_char) = broken.chars().next()
+                && (first_char as usize) < 256 {
                     self.healing_first_chars[first_char as usize] = true;
                 }
-            }
             self.healing_trie.insert(&broken, line);
         }
     }
@@ -210,7 +209,7 @@ impl Dictionary {
             let c = rest.chars().next().unwrap();
 
             // Fast O(1) Boundary Check (Start of word)
-            let is_boundary = last_char.map_or(true, |lc| !lc.is_alphabetic());
+            let is_boundary = last_char.is_none_or(|lc| !lc.is_alphabetic());
 
             if is_boundary && c.is_alphabetic() {
                 // Try to find a healing match
@@ -274,8 +273,8 @@ impl Dictionary {
             true // Always check non-ASCII chars
         };
 
-        if might_heal {
-            if let Some((match_bytes, replacement)) =
+        if might_heal
+            && let Some((match_bytes, replacement)) =
                 self.healing_trie.find_longest_prefix(text_slice)
             {
                 let original_fragment = &text_slice[..match_bytes];
@@ -284,7 +283,6 @@ impl Dictionary {
                     Self::match_case(original_fragment, replacement),
                 ));
             }
-        }
         None
     }
 

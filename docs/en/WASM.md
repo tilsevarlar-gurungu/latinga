@@ -16,7 +16,7 @@ import init, { Latinga } from './pkg/latinga.js';
 
 async function start() {
     await init();
-    
+
     // Initialize once (Heavy operation)
     // Constructor argument: false = New Latin (Kelgusi), true = Current (Joriy)
     const latinga = new Latinga(false);
@@ -28,7 +28,7 @@ async function start() {
 
     // Convert (High-speed operation)
     const output = latinga.ogir("Rust Londonda.");
-    console.log(output); 
+    console.log(output);
 }
 ```
 
@@ -38,8 +38,8 @@ If you built for Node.js (```wasm-pack build --target nodejs```):
 ```javascript
 const { Latinga } = require('./pkg/latinga.js');
 
-const latinga = new Latinga(true); 
-console.log(latinga.ogir("кирилл")); 
+const latinga = new Latinga(true);
+console.log(latinga.oegir("кирилл"));
 ```
 
 ## Performance Note

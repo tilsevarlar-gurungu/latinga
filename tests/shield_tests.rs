@@ -47,7 +47,7 @@ fn test_shield_handles_web_entities_and_technical_scripts() {
     // Joriy: Ғолиб -> Gʻolib
     assert_eq!(
         joriy.oegir("<div>&quot;Ғолиб&quot;</div>"),
-        "<div>&quot;Gʻolib&quot;</div>"
+        "<div>&quot;Ğolib&quot;</div>"
     );
 
     // Kelgusi: Ғолиб -> Ğolib
@@ -129,7 +129,7 @@ fn test_shield_handles_custom_config() {
     // Joriy: Ruscha -> Ruscha
     assert_eq!(
         joriy.oegir(input),
-        "Atama\n**Ruscha:** Город\nBu [oz]Сақлаш[/oz] qilinadi."
+        "Atama\n**Rusça:** Город\nBu [oz]Сақлаш[/oz] qilinadi."
     );
 
     // Kelgusi: Ruscha -> Rusça

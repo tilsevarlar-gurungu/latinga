@@ -90,6 +90,14 @@ pub const MAP_1_TO_1: &[(char, &str)] = &[
     ('ы', "i"),
     ('Э', "E"),
     ('э', "e"),
+    ('ў', "ö"),
+    ('Ў', "Ö"),
+    ('ғ', "ğ"),
+    ('Ғ', "Ğ"),
+    ('ш', "ş"),
+    ('Ш', "Ş"),
+    ('ч', "ç"),
+    ('Ч', "Ç"),
 ];
 
 pub const TRANSLITERABLE_ATTRIBUTES: &[&str] = &["content", "title", "alt", "placeholder", "label"];
